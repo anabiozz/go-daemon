@@ -3,19 +3,48 @@
 # If you want Google's container you would reference google/golang
 # Read more about containers on our dev center
 # http://devcenter.wercker.com/docs/containers/index.html
-box: golang
+# box: golang
+
+box:
+    id: anabiozz/alpine-golang
+    cmd: /bin/sh
 # This is the build pipeline. Pipelines are the core of wercker
 # Read more about pipelines on our dev center
 # http://devcenter.wercker.com/docs/pipelines/index.html
 
 # You can also use services such as databases. Read more on our dev center:
 # http://devcenter.wercker.com/docs/services/index.html
-# services:
-    # - postgres
+services:
+    #- postgres
     # http://devcenter.wercker.com/docs/services/postgresql.html
 
     # - mongo
     # http://devcenter.wercker.com/docs/services/mongodb.html
+
+dev:
+  steps:
+    - setup-go-workspace:
+        package-dir: github.com/anabiozz/go-deamon
+
+
+    - script:
+        name: go get
+        code: |
+            go version
+            go get -u github.com/Masterminds/glide
+            glide install
+            glide up
+
+    - script:
+        name: env
+        code: env
+
+    - internal/watch:
+        code: | 
+            go run main.go
+        reload: true
+
+
 build:
   # The steps that will be executed on build
   # Steps make up the actions in your pipeline
@@ -24,22 +53,44 @@ build:
   steps:
     # Sets the go workspace and places you package
     # at the right place in the workspace tree
-    - setup-go-workspace
+    - setup-go-workspace:
+        package-dir: github.com/anabiozz/go-deamon
 
     # Gets the dependencies
     - script:
         name: go get
         code: |
-          go get
+          cd $WERCKER_SOURCE_DIR
+          go version
+          go get -u github.com/Masterminds/glide
+          export PATH=$WERCKER_SOURCE_DIR:$PATH
+          glide install
 
     # Build the project
     - script:
         name: go build
         code: |
-          go build ./...
+            go build
+            find "$(cd ..; pwd)" -name "go-deamon"
 
     # Test the project
     - script:
         name: go test
         code: |
-          go test ./...
+            go test
+
+    - script:
+        name: copy files to wercker output
+        code: |
+            cp -R ./ ${WERCKER_OUTPUT_DIR}
+
+deploy:
+ steps:
+   - internal/docker-push:
+       username: anabiozz
+       password: Almera103
+       cmd: /pipeline/source/go-deamon
+       port: "8080"
+       tag: latest
+       repository: anabiozz/go-deamon
+       registry: https://registry.hub.docker.com
