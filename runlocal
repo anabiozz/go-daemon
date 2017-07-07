@@ -1,3 +1,7 @@
+<<<<<<< HEAD
 rm -fR _builds _steps _projects
+=======
+rm -fR .wercker/ _builds _steps _projects
+>>>>>>> 4d57646c52cfae72ec1a0f0bd1c9e8ae6248fa0f
 wercker --verbose dev --publish 8080
 rm -fR _builds _steps _projects
