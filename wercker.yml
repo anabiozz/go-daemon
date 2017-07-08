@@ -15,7 +15,10 @@ box:
 # You can also use services such as databases. Read more on our dev center:
 # http://devcenter.wercker.com/docs/services/index.html
 services:
-    #- postgres
+    - id: postgres
+      env: 
+        POSTGRESS_PASSWORD: ourlittlesecret
+        POSTGRESS_USER: go-daemon
     # http://devcenter.wercker.com/docs/services/postgresql.html
 
     # - mongo
@@ -24,7 +27,7 @@ services:
 dev:
   steps:
     - setup-go-workspace:
-        package-dir: github.com/anabiozz/go-deamon
+        package-dir: github.com/anabiozz/go-daemon
 
     - script:
         name: env
@@ -43,6 +46,7 @@ dev:
         name: glide install
         code: |
             glide install
+            glide up
             mv vendor src
 
     - internal/watch:
@@ -59,7 +63,7 @@ build:
     # Sets the go workspace and places you package
     # at the right place in the workspace tree
     - setup-go-workspace:
-        package-dir: github.com/anabiozz/go-deamon
+        package-dir: github.com/anabiozz/go-daemon
 
     # Gets the dependencies
     - script:
@@ -98,9 +102,9 @@ deploy:
  steps:
    - internal/docker-push:
        username: anabiozz
-       password: Almera103
-       cmd: /pipeline/source/go-deamon
+       password: $PASS
+       cmd: /pipeline/source/go-daemon
        port: "8080"
        tag: latest
-       repository: anabiozz/go-deamon
+       repository: anabiozz/go-daemon
        registry: https://registry.hub.docker.com
