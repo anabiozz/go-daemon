@@ -2,3 +2,4 @@ package: github.com/anabiozz/go-daemon
 import: 
 - package: "github.com/codegangsta/negroni"
 - package: "github.com/jmoiron/sqlx"
+- package: "github.com/go-redis/redis"

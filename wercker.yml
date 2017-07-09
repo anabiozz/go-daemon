@@ -18,8 +18,15 @@ services:
     - id: postgres
       env: 
         POSTGRESS_PASSWORD: ourlittlesecret
-        POSTGRESS_USER: go-daemon
+        POSTGRESS_USER: postgres
     # http://devcenter.wercker.com/docs/services/postgresql.html
+
+    - name: redis
+      id: redis
+      cmd: redis-server
+      env: 
+        REDIS_PASSWORD: ourlittlesecret
+        REDIS_USER: redis
 
     # - mongo
     # http://devcenter.wercker.com/docs/services/mongodb.html

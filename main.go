@@ -1,42 +1,66 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 
-	postgresql "github.com/anabiozz/go-daemon/storages/postgresql"
+	"github.com/anabiozz/go-daemon/storages/postgresql"
+	"github.com/anabiozz/go-daemon/storages/redis"
+	"github.com/codegangsta/negroni"
 )
 
-type data struct {
-	id   string `db:"uuid"`
-	pid  string `db:"pid"`
-	data string `db:"data"`
+// ReturnValueStruct (last saved id)
+type ReturnValueStruct struct {
+	ID  int64 `json:"id"`
+	PID int64 `json:"pid"`
 }
 
 func handler(res http.ResponseWriter, req *http.Request) {
-	parametrs := req.URL.Query()
 
-	if len(parametrs) < 1 {
-		log.Println("Url param 'key' is missing")
+	postgresqlConnection := postgresql.Connection()
+	redisConnection := redis.Connection()
+
+	defer postgresqlConnection.Close()
+	defer redisConnection.Close()
+
+	parameters := req.URL.Query()
+	if len(parameters) < 2 {
+		log.Println("Must be two url parameters (pid, data)")
 		return
 	}
 
-	record := data{}
-	record.id = "1"
-	record.pid = parametrs["pid"][0]
-	record.data = parametrs["data"][0]
-
-	log.Println(record)
-
-	_, err := postgresql.Postgresql_connect().NamedExec(`insert into data values (:id,:pid,:data)`, record)
-	if err != nil {
-		fmt.Println("postgresql error ", err)
+	args := make(map[string]interface{})
+	for key := range parameters {
+		args[key] = parameters[key][0]
 	}
 
+	returnValue := ReturnValueStruct{}
+
+	err := postgresql.NamedGet(postgresqlConnection, &returnValue.ID, postgresql.InsertRequest, args)
+	if err != nil {
+		log.Println("postgresql error ", err)
+	}
+
+	js, err := json.Marshal(returnValue)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.Write(js)
+
+	redis.Save(string(returnValue.PID), js, redisConnection)
 }
 
 func main() {
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	mux := http.NewServeMux()
+	go mux.HandleFunc("/", handler)
+
+	n := negroni.Classic()
+	n.UseHandler(mux)
+
+	http.ListenAndServe(":8080", n)
+
 }
