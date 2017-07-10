@@ -1,10 +1,16 @@
 hash: bceaf79789adb51f9679bd0447b458eef441d590d7d0a25b70a261af6518fecc
-updated: 2017-07-09T18:47:13.251923893+03:00
+updated: 2017-07-10T07:42:20.471090794+03:00
 imports:
 - name: github.com/codegangsta/negroni
   version: 460c5567329bbad8917f126d2b386787f48e343b
 - name: github.com/go-redis/redis
   version: 564772f045d89bd55843d7dc8042e0a599401e09
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
+  - internal/proto
 - name: github.com/jmoiron/sqlx
   version: d9bd385d68c068f1fabb5057e3dedcbcbb039d0f
   subpackages:

@@ -16,6 +16,18 @@ type ReturnValueStruct struct {
 	PID int64 `json:"pid"`
 }
 
+func getURLParams(req *http.Request) map[string]interface{} {
+	parameters := req.URL.Query()
+	if len(parameters) < 2 {
+		log.Println("Must be two url parameters (pid, data)")
+	}
+	params := make(map[string]interface{})
+	for key := range parameters {
+		params[key] = parameters[key][0]
+	}
+	return params
+}
+
 func handler(res http.ResponseWriter, req *http.Request) {
 
 	postgresqlConnection := postgresql.Connection()
@@ -24,20 +36,11 @@ func handler(res http.ResponseWriter, req *http.Request) {
 	defer postgresqlConnection.Close()
 	defer redisConnection.Close()
 
-	parameters := req.URL.Query()
-	if len(parameters) < 2 {
-		log.Println("Must be two url parameters (pid, data)")
-		return
-	}
-
-	args := make(map[string]interface{})
-	for key := range parameters {
-		args[key] = parameters[key][0]
-	}
+	params := getURLParams(req)
 
 	returnValue := ReturnValueStruct{}
 
-	err := postgresql.NamedGet(postgresqlConnection, &returnValue.ID, postgresql.InsertRequest, args)
+	err := postgresql.NamedGet(postgresqlConnection, &returnValue.ID, postgresql.InsertRequest, params)
 	if err != nil {
 		log.Println("postgresql error ", err)
 	}
@@ -56,7 +59,7 @@ func handler(res http.ResponseWriter, req *http.Request) {
 
 func main() {
 	mux := http.NewServeMux()
-	go mux.HandleFunc("/", handler)
+	mux.HandleFunc("/", handler)
 
 	n := negroni.Classic()
 	n.UseHandler(mux)
