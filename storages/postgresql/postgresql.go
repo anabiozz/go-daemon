@@ -31,7 +31,7 @@ func Connection() *sqlx.DB {
 	if len(postgresAddr) > 0 {
 		postgresqlConnection = connect(postgresAddr, postgresPass, postgresUser)
 	} else {
-		postgresqlConnection = connect("localhost", "Almera103", "almex")
+		postgresqlConnection = connect("localhost", "yourpass", "yourname")
 	}
 	postgresqlConnection.MustExec(Schema)
 
